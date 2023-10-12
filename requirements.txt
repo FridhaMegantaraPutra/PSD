@@ -1,0 +1,20 @@
+import pickle
+import streamlit as st
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from pickle import dump
+from sklearn.preprocessing import StandardScaler
+import librosa
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import scipy.stats as stats
+from scipy.stats import skew, kurtosis, mode
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import MinMaxScaler
+import streamlit as st
+import sounddevice as sd
+import numpy as np
+import soundfile as sf
