@@ -15,7 +15,9 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler
 import streamlit as st
-import sounddevice as sd
+
+import pyaudio
+import wave
 import numpy as np
 import soundfile as sf
 
@@ -165,79 +167,122 @@ if selected_option == 'file':
 elif selected_option == 'suara':
     st.title("Rekam Audio dan Simpan ke File WAV (2 detik)")
 
+
+
+
     if st.button("Mulai Rekaman"):
-        st.text("Sedang merekam...")
+            st.text("Sedang merekam...")
 
-        # Mulai merekam audio selama 2 detik ke dalam buffer
-        duration = 2  # Durasi rekaman dalam detik
-        sample_rate = 44100  # Frekuensi sampel
-        audio_data = sd.rec(int(duration * sample_rate),
-                            samplerate=sample_rate, channels=1, dtype='int16')
-        sd.wait()
+            # Mulai merekam audio selama 2 detik ke dalam buffer
+            duration = 3  # Durasi rekaman dalam detik
+            sample_rate = 44100  # Frekuensi sampel
+            chunk = 1024  # Ukuran chunk untuk pembacaan audio
+            audio_data = []
 
-        st.text("Rekaman Selesai")
+            p = pyaudio.PyAudio()
 
-        # Simpan rekaman ke dalam variabel Python
-        audio_buffer = audio_data.flatten()
+            stream = p.open(format=pyaudio.paInt16,
+                            channels=1,
+                            rate=sample_rate,
+                            input=True,
+                            frames_per_buffer=chunk)
 
-        # Simpan rekaman audio sebagai file WAV
-        audio_filename = "rekaman_audio.wav"
-        sf.write(audio_filename, audio_buffer, sample_rate)
+            for i in range(0, int(sample_rate / chunk * duration)):
+                audio_chunk = stream.read(chunk)
+                audio_data.append(np.frombuffer(audio_chunk, dtype=np.int16))
+
+            stream.stop_stream()
+            stream.close()
+            p.terminate()
+
+            st.text("Rekaman Selesai")
+
+            # Simpan rekaman ke dalam file WAV
+            audio_filename = "rekaman_audio.wav"
+            wf = wave.open(audio_filename, 'wb')
+            wf.setnchannels(1)
+            wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
+            wf.setframerate(sample_rate)
+            wf.writeframes(b''.join(audio_data))
+            wf.close()
+
+
+
+
+    # if st.button("Mulai Rekaman"):
+    #     st.text("Sedang merekam...")
+
+    #     # Mulai merekam audio selama 2 detik ke dalam buffer
+    #     duration = 2  # Durasi rekaman dalam detik
+    #     sample_rate = 44100  # Frekuensi sampel
+    #     audio_data = sd.rec(int(duration * sample_rate),
+    #                         samplerate=sample_rate, channels=1, dtype='int16')
+    #     sd.wait()
+
+    #     st.text("Rekaman Selesai")
+
+    #     # Simpan rekaman ke dalam variabel Python
+    #     audio_buffer = audio_data.flatten()
+
+    #     # Simpan rekaman audio sebagai file WAV
+    #     audio_filename = "rekaman_audio.wav"
+    #     sf.write(audio_filename, audio_buffer, sample_rate)
 
         # Hanya contoh data dummy (harap diganti dengan pengambilan data yang sesungguhnya)
-        data_mentah = hitung_statistik(audio_filename)
-        data_mentah.to_csv('hasil_zcr_rms2_live.csv', index=False)
-        # Standarisasi fitur (opsional, tapi dapat meningkatkan kinerja PCA dan KNN)
-        kolom = ['ZCR Mean', 'ZCR Median', 'ZCR Std Deviasi',
-                 'ZCR Kurtosis', 'ZCR Skewness']
+            data_mentah = hitung_statistik(audio_filename)
+            data_mentah.to_csv('hasil_zcr_rms2_live.csv', index=False)
+            # Standarisasi fitur (opsional, tapi dapat meningkatkan kinerja PCA dan KNN)
+            kolom = ['ZCR Mean', 'ZCR Median', 'ZCR Std Deviasi',
+                    'ZCR Kurtosis', 'ZCR Skewness']
 
-        # --------- scaler -------------------------
+            # --------- scaler -------------------------
 
-        # # Inisialisasi StandardScaler
-        # scaler = StandardScaler()
-        # scaler.fit(X_train[kolom])
-        # X_train_scaled = scaler.transform(X_train[kolom])
-        # # Lakukan standarisasi pada kolom yang telah ditentukan
-        # data_ternormalisasi = scaler.transform(data_mentah[kolom])
+            # # Inisialisasi StandardScaler
+            # scaler = StandardScaler()
+            # scaler.fit(X_train[kolom])
+            # X_train_scaled = scaler.transform(X_train[kolom])
+            # # Lakukan standarisasi pada kolom yang telah ditentukan
+            # data_ternormalisasi = scaler.transform(data_mentah[kolom])
 
-        with open('scaler.pkl', 'rb') as standarisasi:
-            loadscal = pickle.load(standarisasi)
+            with open('scaler.pkl', 'rb') as standarisasi:
+                loadscal = pickle.load(standarisasi)
 
-        # Inisialisasi StandardScaler
+            # Inisialisasi StandardScaler
 
-        scaler = loadscal
-        scaler.fit(X_train[kolom])
-        X_train_scaled = scaler.transform(X_train[kolom])
-        # Lakukan standarisasi pada kolom yang telah ditentukan
-        data_ternormalisasi = scaler.transform(data_mentah[kolom])
+            scaler = loadscal
+            scaler.fit(X_train[kolom])
+            X_train_scaled = scaler.transform(X_train[kolom])
+            # Lakukan standarisasi pada kolom yang telah ditentukan
+            data_ternormalisasi = scaler.transform(data_mentah[kolom])
 
-        MinimMaximscaler = MinMaxScaler(feature_range=(0, 1))
-        MinimMaximscaler.fit(X_train[kolom])
-        data_MinimMaxim = MinimMaximscaler.transform(data_mentah[kolom])
+            MinimMaximscaler = MinMaxScaler(feature_range=(0, 1))
+            MinimMaximscaler.fit(X_train[kolom])
+            data_MinimMaxim = MinimMaximscaler.transform(data_mentah[kolom])
 
-        # Reduksi dimensi menggunakan PCA
+            # Reduksi dimensi menggunakan PCA
 
-        sklearn_pca = PCA(n_components=1)
-        X_train_pca = sklearn_pca.fit_transform(X_train_scaled)
-        X_pca = sklearn_pca.transform(data_ternormalisasi)
-        MM_pca = sklearn_pca.transform(data_MinimMaxim)
+            sklearn_pca = PCA(n_components=1)
+            X_train_pca = sklearn_pca.fit_transform(X_train_scaled)
+            X_pca = sklearn_pca.transform(data_ternormalisasi)
+            MM_pca = sklearn_pca.transform(data_MinimMaxim)
 
-        # --------- INPORT PICKLE -------------------
+            # --------- INPORT PICKLE -------------------
 
-        # untuk k 13 error di data set 212 dan jadi disgust
+            # untuk k 13 error di data set 212 dan jadi disgust
 
-        with open('modelknn_k1.sav', 'rb') as knn:
-            loadknn = pickle.load(knn)
-        loadknn.fit(X_train_scaled, y_train)
+            with open('modelknn_k1.sav', 'rb') as knn:
+                loadknn = pickle.load(knn)
+            loadknn.fit(X_train_scaled, y_train)
 
-        # Inisialisasi KNN Classifier
-        loadknn.fit(X_train_pca, y_train)
-        y_prediksi = loadknn.predict(X_pca)
+            # Inisialisasi KNN Classifier
+            loadknn.fit(X_train_pca, y_train)
+            y_prediksi = loadknn.predict(X_pca)
 
-        # classifier = KNeighborsClassifier(n_neighbors=2)
-        # classifier.fit(X_train_pca, y_train)
-        # y_prediksi = classifier.predict(X_pca)
+            # classifier = KNeighborsClassifier(n_neighbors=2)
+            # classifier.fit(X_train_pca, y_train)
+            # y_prediksi = classifier.predict(X_pca)
 
-        # Menampilkan hasil klasifikasi
-        st.write("Hasil Klasifikasi:")
-        st.write(y_prediksi)
+            # Menampilkan hasil klasifikasi
+            st.write("Hasil Klasifikasi:")
+            st.write(y_prediksi)
+            st.audio(audio_filename)
