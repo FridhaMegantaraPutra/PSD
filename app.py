@@ -132,16 +132,20 @@ if selected_option == 'file':
         # Lakukan standarisasi pada kolom yang telah ditentukan
         data_ternormalisasi = scaler.transform(data_mentah[kolom])
 
-        MinimMaximscaler = MinMaxScaler(feature_range=(0, 1))
-        MinimMaximscaler.fit(X_train[kolom])
-        data_MinimMaxim = MinimMaximscaler.transform(data_mentah[kolom])
+
+        with open("MinMaxScaler.pkl", "rb") as minmaxs:
+            loadminmax = pickle.load(minmaxs)
+
+        loadminmax.fit(X_train[kolom])
+        data_MinimMaxim = loadminmax.transform(data_mentah[kolom])
 
         # Reduksi dimensi menggunakan PCA
+        with open('sklearn_pca.pkl', 'rb') as reduk:
+                loadpca = pickle.load(reduk)
 
-        sklearn_pca = PCA(n_components=1)
-        X_train_pca = sklearn_pca.fit_transform(X_train_scaled)
-        X_pca = sklearn_pca.transform(data_ternormalisasi)
-        MM_pca = sklearn_pca.transform(data_MinimMaxim)
+        X_train_pca = loadpca.fit_transform(X_train_scaled)
+        X_pca = loadpca.transform(data_ternormalisasi)
+        MM_pca = loadpca.transform(data_MinimMaxim)
 
         # --------- INPORT PICKLE -------------------
 
@@ -174,7 +178,7 @@ elif selected_option == 'suara':
             st.text("Sedang merekam...")
 
             # Mulai merekam audio selama 2 detik ke dalam buffer
-            duration = 3  # Durasi rekaman dalam detik
+            duration = 6  # Durasi rekaman dalam detik
             sample_rate = 44100  # Frekuensi sampel
             chunk = 1024  # Ukuran chunk untuk pembacaan audio
             audio_data = []
@@ -255,16 +259,19 @@ elif selected_option == 'suara':
             # Lakukan standarisasi pada kolom yang telah ditentukan
             data_ternormalisasi = scaler.transform(data_mentah[kolom])
 
-            MinimMaximscaler = MinMaxScaler(feature_range=(0, 1))
-            MinimMaximscaler.fit(X_train[kolom])
-            data_MinimMaxim = MinimMaximscaler.transform(data_mentah[kolom])
+            with open("MinMaxScaler.pkl", "rb") as minmaxs:
+                loadminmax = pickle.load(minmaxs)
+                loadminmax.fit(X_train[kolom])
+                data_MinimMaxim = loadminmax.transform(data_mentah[kolom])
 
             # Reduksi dimensi menggunakan PCA
+            with open('sklearn_pca.pkl', 'rb') as reduk:
+                    loadpca = pickle.load(reduk)
 
-            sklearn_pca = PCA(n_components=1)
-            X_train_pca = sklearn_pca.fit_transform(X_train_scaled)
-            X_pca = sklearn_pca.transform(data_ternormalisasi)
-            MM_pca = sklearn_pca.transform(data_MinimMaxim)
+            X_train_pca = loadpca.fit_transform(X_train_scaled)
+            X_pca = loadpca.transform(data_ternormalisasi)
+            MM_pca = loadpca.transform(data_MinimMaxim)
+
 
             # --------- INPORT PICKLE -------------------
 
