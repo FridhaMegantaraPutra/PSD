@@ -121,7 +121,7 @@ if selected_option == 'file':
         # # Lakukan standarisasi pada kolom yang telah ditentukan
         # data_ternormalisasi = scaler.transform(data_mentah[kolom])
 
-        with open('scaler.pkl', 'rb') as standarisasi:
+        with open('scaler5_fitur.pkl', 'rb') as standarisasi:
             loadscal = pickle.load(standarisasi)
 
         # Inisialisasi StandardScaler
@@ -133,11 +133,11 @@ if selected_option == 'file':
         data_ternormalisasi = scaler.transform(data_mentah[kolom])
 
 
-        with open("MinMaxScaler.pkl", "rb") as minmaxs:
-            loadminmax = pickle.load(minmaxs)
+        # with open("MinMaxScaler.pkl", "rb") as minmaxs:
+        #     loadminmax = pickle.load(minmaxs)
 
-        loadminmax.fit(X_train[kolom])
-        data_MinimMaxim = loadminmax.transform(data_mentah[kolom])
+        # loadminmax.fit(X_train[kolom])
+        # data_MinimMaxim = loadminmax.transform(data_mentah[kolom])
 
         # Reduksi dimensi menggunakan PCA
         with open('sklearn_pca.pkl', 'rb') as reduk:
@@ -145,13 +145,12 @@ if selected_option == 'file':
 
         X_train_pca = loadpca.fit_transform(X_train_scaled)
         X_pca = loadpca.transform(data_ternormalisasi)
-        MM_pca = loadpca.transform(data_MinimMaxim)
 
         # --------- INPORT PICKLE -------------------
 
         # untuk k 13 error di data set 212 dan jadi disgust
 
-        with open('modelknn_k1.sav', 'rb') as knn:
+        with open('modelknn5_fitur.pkl', 'rb') as knn:
             loadknn = pickle.load(knn)
         loadknn.fit(X_train_scaled, y_train)
 
